@@ -164,6 +164,7 @@ class GUI():
         if self.commit_message == 'Commit Message...':
             self.commit_message = "add commited file"
         self.logger.log(f"Syncing commit  : {self.commit_message}")
+        os.popen('git reset')
         os.popen('git add .')
         
         self.commit_run_console = os.popen(f'git commit -a -m "{self.commit_message}"').read().splitlines()
