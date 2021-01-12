@@ -1,5 +1,6 @@
 {
     "n_run": 0,
-    "Username": null,
+    "username": null,
     "email": null,
+    "password":null
 }
