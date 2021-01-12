@@ -1,5 +1,7 @@
 from tkinter import *
 import os
+import json
+
 
 class GUI():
 
@@ -42,7 +44,25 @@ class GUI():
         username = self.username_input.get()
         email = self.email_input.get()
         password = self.password_input.get()
+
+        # login
+        os.system(f'git config --global user.name "{username}"')
+        os.system(f'git config --global user.email "{email}"')
+        os.system(f'git config --global user.password "{password}')
+
+        # Edit user.json
+        with open("git_resources/user.json") as json_file:
+            user_json = json.load(json_file)
+            
+        user_json["n_run"] += 1
+        user_json["username"] = username
+        user_json["email"] = email
+        user_json["password"] = password
+
         
+
+        
+
 
     def run(self):
         self.__login_page
