@@ -1,7 +1,9 @@
 from tkinter import *
+from tkinter import filedialog
 import os
 import json
 from bananalog.banana import Banana
+import numpy as np
 
 class GUI():
 
@@ -9,7 +11,8 @@ class GUI():
         self.logger = Banana()
         self.logger.type_color = {
             "Error": 'Red',
-            "Success":'Green'
+            "Success":'Green',
+            "Warning": 'Yellow'
         }
 
         self.window = Tk()
@@ -17,8 +20,14 @@ class GUI():
 
         # Set windows title name
         self.window.title(self.title)
-
+        self.logger.log("GUI Initalize", "Success")
+        self.working_dir = None
+        self.is_git_dir = False
+        self.sync = False
+        self.repo_name = None
+        
     def __login_page(self):
+        self.logger.log("Starting...Login Page", "Success")
         # Load User.json for default input
         
         with open("git_resouces/user.json") as json_file:
@@ -55,6 +64,7 @@ class GUI():
         # user account configuration submit button
         submit_button = Button(self.window, text="Submit", command=self.__login_action)
         submit_button.grid(column=1, row=4, sticky="E")
+        self.window.mainloop()
 
     def __login_action(self):
         # Get User Input
@@ -63,8 +73,8 @@ class GUI():
         password = self.password_input.get()
 
         # login
-        os.system(f'git config --global user.name "{username}"')
-        os.system(f'git config --global user.email "{email}"')
+        os.system(f'git config --global user.name "{self.username}"')
+        os.system(f'git config --global user.email "{self.email}"')
         os.system(f'git config --global user.password "{password}')
 
         # Edit user.json
@@ -77,13 +87,107 @@ class GUI():
             json.dump(self.user_json, fp)
 
         self.logger.log(f"User saved username : {self.username}, email : {self.email}", "Success")
+        self.window.destroy()
+    def __repo_config_page(self):
+        select_working_dir_text = Label(self.window, text="Please select working directory")
+        select_working_dir_text.grid(row=0, columnspan=3, sticky="W")
+        
+        # Folder Selection
+        working_dir_text = Label(self.window, text="Working Directory : ")
+        working_dir_text.grid(row=1, column=0, sticky="W")
+        self.working_dir_entry = Entry(self.window, width=40)
+        self.working_dir_entry.grid(row=1, column=1, sticky="W")
+        select_dir_button = Button(self.window, text="select directory", command=self.__get_folder)
+        select_dir_button.grid(row=1, column=2)
+
+        # Git repo
+        git_repo_text = Label(self.window, text="Working Git Repo  :")
+        git_repo_text.grid(row=2, column=0, sticky="W")
+        self.git_repo_entry = Entry(self.window, width=40)
+        
+            
+        self.git_repo_entry.grid(row=2, column=1, sticky="W")
+        self.git_repo_clone = Button(self.window, text="Clone", command=self.__git_clone)
+        self.git_repo_clone.grid(row=2, column=2, sticky="nswe")
+
+        self.commit_entry = Entry(self.window, width=30)
+        self.commit_entry.insert(0, 'Commit Message...')
+        self.commit_entry.bind('<FocusIn>', self.__commit_focus_IN)
+        self.commit_entry.bind('<FocusOut>', self.__commit_focus_OUT)
+        self.commit_entry.config(fg='grey')
+        self.commit_entry.grid(row=3, columnspan=2, sticky="nswe")
+
+        self.sync_button = Button(self.window, text="Sync", command=self.__sync)
+        self.sync_button.grid(row=3, column=2, sticky="nswe")
+        
         
 
+        self.window.mainloop()
+
+    def __get_folder(self):
+        self.working_dir = filedialog.askdirectory()
+        self.working_dir_entry.insert(0, self.working_dir)
+        
+        # Change Dir
+        os.chdir(self.working_dir_entry.get())
+
+        self.is_git_dir = self.__git_check()
+        if self.is_git_dir is True:
+            self.git_repo_entry.insert(0, os.popen('git remote get-url origin').read())
+            self.git_repo_clone.config(state="disable")
+            self.repo_url = self.git_repo_entry.get()[0:-1]
+            self.logger.log(f"Found Git Repository : {self.repo_url}", "Success")
+            self.logger.log("Disabling Clone function", "Warning")
+            self.repo_name = self.repo_url.split('/')[-1].split('.')[0]
+
+        
+    
+    def __git_check(self):
+        if os.popen('git status').read() == 'fatal: not a git repository (or any of the parent directories): .git':
+            return False
+        else:
+            return True
+
+    def __git_clone(self):
+        self.repo_url = self.git_repo_entry.get()
+        self.logger.log(f"Start Cloning repository {self.repo_url}")
+        cloning_message = os.popen(f"git clone {self.repo_url} .").read()
+        if "fetal" in cloning_message:
+            self.logger.log("Cloning Failed", "Error")
+        else:
+            self.logger.log("Cloning Success", "Success")
+        self.repo_name = self.repo_url.split('/')[-1].split('.')[0]
+
+    def __sync(self):
+        self.commit_message = self.commit_entry.get()
+        if self.commit_message == 'Commit Message...' or '' or ' ':
+            self.commit_message "add commited file"
+        self.logger.log(f"Syncing commit  : {self.commit_message}")
+        os.system('git add .')
+        os.system(f'git commit -a -m {self.commit_message}')
+        os.system(f'git push')
+        
+        
+        
+    def __commit_focus_IN(self, event):
+        if self.commit_entry.get() == 'Commit Message...':
+            self.commit_entry.delete(0, "end")
+            self.commit_entry.insert(0, '')
+            self.commit_entry.config(fg='black')
+           
+    
+    def __commit_focus_OUT(self, event):
+        if self.commit_entry.get() == '':
+            self.commit_entry.insert(0, 'Commit Message...')
+            self.commit_entry.config(fg='grey')
+            
+        
 
     def run(self):
         self.__login_page()
-        self.window.mainloop()
-
+        self.__init__()
+        self.__repo_config_page()
+        
 a = GUI()
 
 a.run()
