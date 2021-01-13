@@ -172,7 +172,9 @@ class GUI():
         for action in self.commit_run_console[1:]:
             self.logger.log(f"changed {action}", "Warning")
         self.logger.log("start pushing")
+        os.popen('git pull')
         # os.system('del .git\index.lock')
+        os.popen('git push')
         push_run_console = os.popen(f'git push').read()
         '''
         if 'done' in push_run_console:

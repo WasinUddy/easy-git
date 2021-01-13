@@ -164,6 +164,7 @@ class GUI():
         if self.commit_message == 'Commit Message...':
             self.commit_message = "add commited file"
         self.logger.log(f"Syncing commit  : {self.commit_message}")
+        os.system('del .git\index.lock')
         os.popen('git reset')
         os.popen('git add .')
         
@@ -171,8 +172,10 @@ class GUI():
         for action in self.commit_run_console[1:]:
             self.logger.log(f"changed {action}", "Warning")
         self.logger.log("start pushing")
-        os.system('del .git\index.lock')
-        push_run_console = os.popen(f'git push -u origin master').read()
+        os.popen('git pull')
+        # os.system('del .git\index.lock')
+        os.popen('git push')
+        push_run_console = os.popen(f'git push').read()
         '''
         if 'done' in push_run_console:
             self.logger.log("Pushed Complete", "Success")
