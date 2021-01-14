@@ -3,7 +3,7 @@ from tkinter import filedialog
 import os
 import json
 from bananalog.banana import Banana
-import numpy as np
+
 
 class GUI():
 
